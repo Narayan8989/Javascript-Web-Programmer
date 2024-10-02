@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <title>Chemicals Table</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            cursor: pointer;
+            background-color: #f2f2f2;
+        }
+        th:hover {
+            background-color: #ddd;
+        }
+        .toolbar {
+            margin-bottom: 10px;
+        }
+        span {
+            margin-right: 63%;
+            margin-left: 0.5%;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        .selected {
+            background-color: #e0f7fa; /* Light blue background for selected row */
+        }
+        input[type="checkbox"] {
+            cursor: pointer;
+        }
+        input {
+            width: 90%;
+            border: none;
+            background: transparent;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <span>Chemical Supplies</span>
+    <button onclick="addRow()">Add</button>
+    <button onclick="moveRow(-1)">Move Up</button>
+    <button onclick="moveRow(1)">Move Down</button>
+    <button onclick="deleteRow()">Delete</button>
+    <button onclick="saveData()">Save</button>
+    <button onclick="refreshData()">Refresh</button>
+</div>
+
+<table id="chemicalsTable">
+    <thead>
+        <tr>
+            <th></th>
+            <th onclick="sortTable(0)">ID</th>
+            <th onclick="sortTable(1)">Chemical Name</th>
+            <th onclick="sortTable(2)">Vendor</th>
+            <th onclick="sortTable(3)">Density</th>
+            <th onclick="sortTable(4)">Viscosity</th>
+            <th onclick="sortTable(5)">Packaging</th>
+            <th onclick="sortTable(6)">Pack Size</th>
+            <th onclick="sortTable(7)">Unit</th>
+            <th onclick="sortTable(8)">Quantity</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Rows will be inserted here dynamically -->
+    </tbody>
+</table>
+
+<script>
+    const defaultData = [
+        {"id": 1, "chemicalName": "Acetic Acid", "vendor": "Vendor A", "density": "1.05 g/cm³", "viscosity": "0.9 cP", "packaging": "Bottle", "packSize": "1 L", "unit": "L", "quantity": 100},
+        {"id": 2, "chemicalName": "Benzene", "vendor": "Vendor B", "density": "0.87 g/cm³", "viscosity": "0.65 cP", "packaging": "Drum", "packSize": "200 L", "unit": "L", "quantity": 50},
+        {"id": 3, "chemicalName": "Sodium Chloride", "vendor": "Vendor C", "density": "2.16 g/cm³", "viscosity": "0.8 cP", "packaging": "Bag", "packSize": "25 kg", "unit": "kg", "quantity": 300},
+        {"id": 4, "chemicalName": "Ethanol", "vendor": "Vendor D", "density": "0.789 g/cm³", "viscosity": "1.2 cP", "packaging": "Bottle", "packSize": "500 mL", "unit": "mL", "quantity": 150},
+        {"id": 5, "chemicalName": "Methanol", "vendor": "Vendor E", "density": "0.791 g/cm³", "viscosity": "0.6 cP", "packaging": "Canister", "packSize": "1 L", "unit": "L", "quantity": 80},
+        {"id": 6, "chemicalName": "Chloroform", "vendor": "Vendor F", "density": "1.48 g/cm³", "viscosity": "0.56 cP", "packaging": "Bottle", "packSize": "250 mL", "unit": "mL", "quantity": 120},
+        {"id": 7, "chemicalName": "Acetone", "vendor": "Vendor G", "density": "0.784 g/cm³", "viscosity": "0.32 cP", "packaging": "Drum", "packSize": "100 L", "unit": "L", "quantity": 200},
+        {"id": 8, "chemicalName": "Hydrochloric Acid", "vendor": "Vendor H", "density": "1.19 g/cm³", "viscosity": "0.9 cP", "packaging": "Bottle", "packSize": "1 L", "unit": "L", "quantity": 60},
+        {"id": 9, "chemicalName": "Sodium Bicarbonate", "vendor": "Vendor I", "density": "2.20 g/cm³", "viscosity": "0.7 cP", "packaging": "Bag", "packSize": "1 kg", "unit": "kg", "quantity": 500},
+        {"id": 10, "chemicalName": "Calcium Carbonate", "vendor": "Vendor J", "density": "2.71 g/cm³", "viscosity": "1.0 cP", "packaging": "Sack", "packSize": "25 kg", "unit": "kg", "quantity": 400},
+        {"id": 11, "chemicalName": "Potassium Nitrate", "vendor": "Vendor K", "density": "1.98 g/cm³", "viscosity": "1.5 cP", "packaging": "Bag", "packSize": "50 kg", "unit": "kg", "quantity": 250},
+        {"id": 12, "chemicalName": "Sulfuric Acid", "vendor": "Vendor L", "density": "1.84 g/cm³", "viscosity": "20 cP", "packaging": "Drum", "packSize": "200 L", "unit": "L", "quantity": 30},
+        {"id": 13, "chemicalName": "Nitric Acid", "vendor": "Vendor M", "density": "1.51 g/cm³", "viscosity": "1.1 cP", "packaging": "Bottle", "packSize": "500 mL", "unit": "mL", "quantity": 90},
+        {"id": 14, "chemicalName": "Formic Acid", "vendor": "Vendor N", "density": "1.22 g/cm³", "viscosity": "1.2 cP", "packaging": "Bottle", "packSize": "1 L", "unit": "L", "quantity": 75},
+        {"id": 15, "chemicalName": "Sodium Hydroxide", "vendor": "Vendor O", "density": "2.13 g/cm³", "viscosity": "1.0 cP", "packaging": "Bag", "packSize": "50 kg", "unit": "kg", "quantity": 150}
+    ];
+    let chemicalsData = JSON.parse(localStorage.getItem('chemicalsData')) || defaultData;
+    let currentSortColumn = -1;
+    let sortOrder = 'asc';
+    let unsavedChanges = false; // Track unsaved changes
+
+    function loadTable() {
+        const tableBody = document.querySelector('#chemicalsTable tbody');
+        tableBody.innerHTML = '';
+        chemicalsData.forEach((chemical, rowIndex) => {
+            const row = document.createElement('tr');
+            const checkboxCell = document.createElement('td');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.onclick = (e) => {
+                row.classList.toggle('selected', checkbox.checked);
+                e.stopPropagation();
+            };
+            checkboxCell.appendChild(checkbox);
+            row.appendChild(checkboxCell);
+
+            Object.keys(chemical).forEach((key, columnIndex) => {
+                const cell = document.createElement('td');
+                cell.innerText = chemical[key];
+                cell.onclick = (e) => editCell(rowIndex, columnIndex, e);
+                row.appendChild(cell);
+            });
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    function editCell(rowIndex, columnIndex, event) {
+        event.stopPropagation();
+        const cell = event.target;
+
+        const input = document.createElement('input');
+        input.value = cell.innerText;
+
+        input.onblur = () => {
+            chemicalsData[rowIndex][Object.keys(chemicalsData[rowIndex])[columnIndex]] = input.value;
+            cell.innerText = input.value;
+            unsavedChanges = true; // Mark as unsaved
+        };
+
+        cell.innerHTML = '';
+        cell.appendChild(input);
+        input.focus();
+    }
+
+    function addRow() {
+        const newRow = {
+            "id": chemicalsData.length + 1,
+            "chemicalName": "",
+            "vendor": "",
+            "density": "",
+            "viscosity": "",
+            "packaging": "",
+            "packSize": "",
+            "unit": "",
+            "quantity": 0
+        };
+        chemicalsData.push(newRow);
+        loadTable();
+        unsavedChanges = true; // Mark as unsaved
+    }
+
+    function moveRow(direction) {
+        const selectedRowIndex = Array.from(document.querySelectorAll('#chemicalsTable tbody tr'))
+            .findIndex(row => row.classList.contains('selected'));
+        
+        if (selectedRowIndex === -1) return; // No row selected
+        const targetIndex = selectedRowIndex + direction;
+
+        if (targetIndex < 0 || targetIndex >= chemicalsData.length) return; // Out of bounds
+
+        [chemicalsData[selectedRowIndex], chemicalsData[targetIndex]] = 
+            [chemicalsData[targetIndex], chemicalsData[selectedRowIndex]];
+
+        loadTable();
+        unsavedChanges = true; // Mark as unsaved
+    }
+
+    function deleteRow() {
+        const tableBody = document.querySelector('#chemicalsTable tbody');
+        const selectedRows = Array.from(tableBody.querySelectorAll('tr.selected'));
+
+        selectedRows.forEach(row => {
+            const index = Array.from(tableBody.children).indexOf(row);
+            chemicalsData.splice(index, 1);
+        });
+
+        loadTable();
+        unsavedChanges = true; // Mark as unsaved
+    }
+
+    function sortTable(columnIndex) {
+        if (currentSortColumn === columnIndex) {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortOrder = 'asc';
+            currentSortColumn = columnIndex;
+        }
+
+        chemicalsData.sort((a, b) => {
+            const aValue = Object.values(a)[columnIndex];
+            const bValue = Object.values(b)[columnIndex];
+            return (sortOrder === 'asc' ? aValue > bValue : aValue < bValue) ? 1 : -1;
+        });
+        loadTable();
+    }
+
+    function saveData() {
+        localStorage.setItem('chemicalsData', JSON.stringify(chemicalsData));
+        unsavedChanges = false; // Mark as saved
+        alert("Data saved successfully!");
+    }
+
+    function refreshData() {
+        if (unsavedChanges && !confirm("You have unsaved changes. Do you want to continue?")) {
+            return; // Don't refresh if there are unsaved changes
+        }
+        chemicalsData = JSON.parse(localStorage.getItem('chemicalsData')) || defaultData;
+        loadTable();
+    }
+
+    window.onload = loadTable;
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        });
+    }
+</script>
+
+</body>
+</html>
